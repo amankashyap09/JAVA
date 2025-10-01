@@ -1,0 +1,73 @@
+import java.io.*;
+import java.util.*;
+
+class Main {
+    public static void main(String[] args) throws Exception {
+        Scanner sc = new Scanner(System.in);
+
+        // Part A: Autoboxing/Unboxing sum
+        ArrayList<Integer> nums = new ArrayList<>();
+        System.out.println("Enter integers separated by space:");
+        for(String s : sc.nextLine().split(" ")) nums.add(Integer.parseInt(s));
+        int sum = 0;
+        for(Integer n : nums) sum += n;
+        System.out.println("Sum: " + sum);
+
+        // Part B: Serialization of Student
+        Student st = new Student(101, "Aman", 9.2);
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("student.ser"));
+        out.writeObject(st);
+        out.close();
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream("student.ser"));
+        Student st2 = (Student) in.readObject();
+        in.close();
+        System.out.println("Deserialized Student: " + st2);
+
+        // Part C: Menu-driven Employee Management
+        while(true){
+            System.out.println("\n1. Add Employee\n2. Display All Employees\n3. Exit");
+            System.out.print("Choose: ");
+            int choice = Integer.parseInt(sc.nextLine());
+            switch(choice){
+                case 1 -> {
+                    System.out.print("ID: "); int id = Integer.parseInt(sc.nextLine());
+                    System.out.print("Name: "); String name = sc.nextLine();
+                    System.out.print("Designation: "); String des = sc.nextLine();
+                    System.out.print("Salary: "); double sal = Double.parseDouble(sc.nextLine());
+                    Employee emp = new Employee(id,name,des,sal);
+                    try(ObjectOutputStream oos = new AppendableObjectOutputStream(new FileOutputStream("employees.dat", true))){
+                        oos.writeObject(emp);
+                    } catch (IOException e) { System.out.println(e.getMessage()); }
+                }
+                case 2 -> {
+                    try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream("employees.dat"))){
+                        System.out.println("\nEmployees:");
+                        while(true){
+                            Employee e = (Employee) ois.readObject();
+                            System.out.println(e);
+                        }
+                    } catch (EOFException e){} catch (IOException | ClassNotFoundException e){ System.out.println(e.getMessage()); }
+                }
+                case 3 -> { System.out.println("Exiting..."); return; }
+                default -> System.out.println("Invalid choice.");
+            }
+        }
+    }
+
+    static class AppendableObjectOutputStream extends ObjectOutputStream{
+        AppendableObjectOutputStream(OutputStream out) throws IOException{ super(out); }
+        @Override protected void writeStreamHeader() throws IOException { reset(); }
+    }
+}
+
+class Student implements Serializable {
+    int id; String name; double grade;
+    Student(int id, String name, double grade){ this.id=id; this.name=name; this.grade=grade; }
+    public String toString(){ return id + " " + name + " " + grade; }
+}
+
+class Employee implements Serializable {
+    int id; String name, designation; double salary;
+    Employee(int id, String name, String des, double sal){ this.id=id; this.name=name; designation=des; salary=sal; }
+    public String toString(){ return id + " " + name + " " + designation + " " + salary; }
+}
